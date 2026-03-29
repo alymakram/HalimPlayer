@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حليم بلاير – عبد الحليم حافظ</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cinzel+Decorative:wght@400;700&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+
+  <style>
+    :root {
+      --gold:       #c9a84c;
+      --gold-light: #e8c97a;
+      --gold-dim:   #7a5c1e;
+      --cream:      #f5efe0;
+      --dark:       #0d0a05;
+      --sepia:      #8b6914;
+      --shadow:     rgba(0,0,0,0.85);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--dark); color: var(--cream); font-family: 'Cairo', sans-serif; overflow-x: hidden; }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 55% at 50% -5%,  rgba(201,168,76,.16) 0%, transparent 65%),
+        radial-gradient(ellipse 55% 35% at 50% 108%, rgba(139,26,26,.10) 0%, transparent 65%),
+        linear-gradient(180deg,#0d0a05 0%,#1a1205 50%,#0d0a05 100%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .wrap { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem 4rem; }
+
+    /* HEADER */
+    .header { text-align: center; margin-bottom: 2rem; animation: fadeDown .7s ease both; }
+    .orn { display: flex; align-items: center; justify-content: center; gap: .9rem; margin-bottom: .4rem; }
+    .orn-line { flex: 1; max-width: 110px; height: 1px; background: linear-gradient(90deg,transparent,var(--gold),transparent); }
+    .orn-diamond { width: 7px; height: 7px; background: var(--gold); transform: rotate(45deg); box-shadow: 0 0 8px var(--gold); }
+    .title-ar { font-family:'Amiri',serif; font-size: clamp(2rem,6vw,3.2rem); font-weight:700; color:var(--gold-light); text-shadow:0 0 40px rgba(201,168,76,.4),0 2px 4px var(--shadow); }
+    .title-en { font-family:'Cinzel Decorative',serif; font-size:.78rem; color:var(--sepia); letter-spacing:.22em; text-transform:uppercase; margin-top:.2rem; }
+
+    /* WALLET */
+    .wallet-bar { display:flex; align-items:center; gap:.7rem; background:rgba(255,255,255,.03); border:1px solid rgba(201,168,76,.18); border-radius:50px; padding:.4rem 1.1rem; margin-bottom:2rem; animation:fadeUp .7s .15s ease both; }
+    .w-dot { width:8px;height:8px;border-radius:50%;background:#444;transition:background .3s,box-shadow .3s; }
+    .w-dot.ok { background:#4caf50;box-shadow:0 0 6px #4caf50; }
+    .w-addr { font-size:.75rem;color:rgba(245,239,224,.55);direction:ltr; }
+    #connectBtn { font-family:'Cairo',sans-serif;font-size:.73rem;font-weight:600;padding:.32rem .85rem;border:1px solid var(--gold-dim);border-radius:50px;background:transparent;color:var(--gold);cursor:pointer;transition:all .22s; }
+    #connectBtn:hover { background:rgba(201,168,76,.1);border-color:var(--gold); }
+    #connectBtn:disabled { opacity:.6;cursor:default; }
+
+    /* CARD */
+    .card { width:100%;max-width:460px;background:linear-gradient(145deg,rgba(30,22,8,.97),rgba(16,11,3,.99));border:1px solid rgba(201,168,76,.22);border-radius:22px;overflow:hidden;box-shadow:0 0 55px rgba(201,168,76,.07),0 28px 70px rgba(0,0,0,.75),inset 0 1px 0 rgba(201,168,76,.13);animation:fadeUp .7s .08s ease both; }
+
+    /* BANNER */
+    .banner { position:relative;width:100%;height:250px;overflow:hidden;background:#0d0a05; }
+    .banner img { width:100%;height:100%;object-fit:cover;object-position:center 15%;filter:sepia(.55) contrast(1.1) brightness(.7);transition:filter 1.8s; }
+    .banner img.playing { filter:sepia(.2) contrast(1.15) brightness(.82); }
+    .banner-grad { position:absolute;inset:0;background:linear-gradient(to bottom,transparent 28%,rgba(13,10,5,.45) 60%,rgba(13,10,5,.97) 100%); }
+    .banner-text { position:absolute;bottom:1rem;left:0;right:0;text-align:center; }
+    .artist-name { font-family:'Amiri',serif;font-size:1.75rem;font-weight:700;color:var(--gold-light);text-shadow:0 2px 14px rgba(0,0,0,.85),0 0 30px rgba(201,168,76,.25); }
+    .artist-dates { font-size:.67rem;color:rgba(201,168,76,.5);letter-spacing:.18em;font-family:'Cinzel Decorative',serif; }
+
+    /* VINYL */
+    .vinyl-area { display:flex;justify-content:center;padding:1.4rem 0 .4rem; }
+    .vinyl { width:86px;height:86px;border-radius:50%;
+      background: conic-gradient(from 0deg, #1e1e1e 0deg, #2a2a2a 30deg, #111 60deg, #252525 90deg, #111 120deg, #1e1e1e 150deg, #2a2a2a 180deg, #111 210deg, #252525 240deg, #111 270deg, #1e1e1e 300deg, #2a2a2a 330deg, #111 360deg);
+      box-shadow:0 0 0 3px #222,0 0 18px rgba(0,0,0,.7);position:relative;transition:box-shadow .5s; }
+    .vinyl::before { content:'';position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle,#181818 0%,#0d0d0d 60%,#151515 100%);box-shadow:inset 0 0 8px rgba(0,0,0,.6); }
+    .vinyl::after { content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,var(--gold) 30%,var(--gold-dim) 100%);box-shadow:0 0 5px rgba(201,168,76,.5);z-index:1; }
+    .vinyl.spin { animation:spin 2.5s linear infinite;box-shadow:0 0 0 3px var(--gold-dim),0 0 28px rgba(201,168,76,.18); }
+    @keyframes spin { to{transform:rotate(360deg);} }
+
+    /* NOW PLAYING */
+    .now-playing { text-align:center;padding:.2rem 1.4rem .5rem;min-height:58px; }
+    .np-label { font-size:.62rem;letter-spacing:.2em;color:var(--sepia);text-transform:uppercase;font-family:'Cinzel Decorative',serif; }
+    .np-title { font-family:'Amiri',serif;font-size:1.35rem;font-weight:700;color:var(--gold-light);margin-top:.15rem;text-shadow:0 0 18px rgba(201,168,76,.22);min-height:1.7rem; }
+
+    /* PROGRESS */
+    .prog-wrap { padding:0 1.4rem;margin:.4rem 0; }
+    .prog-bg { height:3px;background:rgba(255,255,255,.08);border-radius:2px;cursor:pointer;position:relative; }
+    .prog-fill { height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));border-radius:2px;width:0%;transition:width .1s linear;position:relative; }
+    .prog-fill::after { content:'';position:absolute;right:-4px;top:-4px;width:11px;height:11px;border-radius:50%;background:var(--gold-light);box-shadow:0 0 5px var(--gold);opacity:0;transition:opacity .2s; }
+    .prog-bg:hover .prog-fill::after { opacity:1; }
+    .time-row { display:flex;justify-content:space-between;font-size:.65rem;color:rgba(245,239,224,.3);margin-top:.35rem;direction:ltr; }
+
+    /* CONTROLS */
+    .controls { display:flex;align-items:center;justify-content:center;gap:1.1rem;padding:.7rem 1.4rem .9rem; }
+    .ctrl { background:none;border:none;cursor:pointer;color:rgba(245,239,224,.4);transition:color .2s,transform .15s;padding:.25rem;line-height:0; }
+    .ctrl:hover { color:var(--gold-light);transform:scale(1.12); }
+    .ctrl:active { transform:scale(.94); }
+    .play-btn { width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--gold) 0%,var(--sepia) 100%);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--dark);box-shadow:0 0 18px rgba(201,168,76,.3),0 4px 14px rgba(0,0,0,.5);transition:transform .15s,box-shadow .2s; }
+    .play-btn:hover { transform:scale(1.07);box-shadow:0 0 28px rgba(201,168,76,.5),0 4px 18px rgba(0,0,0,.5); }
+    .play-btn:active { transform:scale(.96); }
+
+    /* VOLUME */
+    .vol-row { display:flex;align-items:center;gap:.7rem;padding:0 1.4rem .65rem; }
+    .vol-ic { color:rgba(245,239,224,.3);line-height:0; }
+    input[type=range] { flex:1;-webkit-appearance:none;appearance:none;height:3px;background:rgba(255,255,255,.1);border-radius:2px;outline:none;cursor:pointer; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--gold);box-shadow:0 0 4px rgba(201,168,76,.45); }
+
+    /* PLAYLIST */
+    .playlist { border-top:1px solid rgba(201,168,76,.1);padding:.9rem 1.4rem 1.4rem; }
+    .pl-label { font-size:.62rem;letter-spacing:.2em;color:var(--sepia);text-transform:uppercase;font-family:'Cinzel Decorative',serif;margin-bottom:.7rem;text-align:center; }
+    .pl-list { list-style:none;display:flex;flex-direction:column;gap:.28rem;max-height:280px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--gold-dim) transparent; }
+    .pl-item { display:flex;align-items:center;gap:.7rem;padding:.55rem .85rem;border-radius:10px;cursor:pointer;transition:background .2s,transform .15s;border:1px solid transparent; }
+    .pl-item:hover { background:rgba(201,168,76,.07);border-color:rgba(201,168,76,.13);transform:translateX(-3px); }
+    .pl-item.active { background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.28); }
+    .pl-num { font-size:.67rem;color:var(--gold-dim);width:17px;text-align:center;font-family:'Cinzel Decorative',serif; }
+    .pl-item.active .pl-num { color:var(--gold); }
+    .pl-info { flex:1; }
+    .pl-ar { font-family:'Amiri',serif;font-size:.98rem;color:rgba(245,239,224,.78);transition:color .2s; }
+    .pl-en { font-size:.6rem;color:rgba(245,239,224,.28);letter-spacing:.05em; }
+    .pl-item:hover .pl-ar, .pl-item.active .pl-ar { color:var(--gold-light); }
+    .eq-bars { display:flex;align-items:flex-end;gap:2px;height:15px;opacity:0; }
+    .pl-item.active.spinning .eq-bars { opacity:1; }
+    .eq-bar { width:3px;background:var(--gold);border-radius:2px;animation:eq 1s ease-in-out infinite alternate; }
+    .eq-bar:nth-child(1){animation-duration:.7s}
+    .eq-bar:nth-child(2){animation-duration:.9s;animation-delay:.1s}
+    .eq-bar:nth-child(3){animation-duration:.6s;animation-delay:.2s}
+    @keyframes eq { from{height:3px}to{height:13px} }
+
+    /* TX STATUS */
+    .tx-box { margin-top:1.3rem;width:100%;max-width:460px;text-align:center; }
+    .tx-pill { display:inline-flex;align-items:center;gap:.5rem;padding:.42rem .95rem;border-radius:50px;font-size:.7rem;background:rgba(255,255,255,.03);border:1px solid rgba(201,168,76,.14);color:rgba(245,239,224,.5);direction:ltr; }
+    .tx-pill a { color:var(--gold);text-decoration:none; }
+    .tx-pill a:hover { text-decoration:underline; }
+    .tx-spin { width:9px;height:9px;border:1.5px solid rgba(201,168,76,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite; }
+
+    /* STATS */
+    .stats { display:flex;justify-content:center;gap:2rem;margin-top:1.3rem;animation:fadeUp .8s .35s ease both; }
+    .stat { text-align:center; }
+    .stat-n { font-family:'Cinzel Decorative',serif;font-size:1.2rem;color:var(--gold);text-shadow:0 0 12px rgba(201,168,76,.28); }
+    .stat-l { font-size:.6rem;color:rgba(245,239,224,.28);letter-spacing:.12em;text-transform:uppercase; }
+
+    /* FOOTER */
+    .footer { margin-top:1.8rem;text-align:center;color:rgba(245,239,224,.18);font-size:.62rem;letter-spacing:.1em;animation:fadeUp .8s .45s ease both; }
+    .footer a { color:var(--gold-dim);text-decoration:none; }
+
+    /* TOAST */
+    .toast { position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(28,20,6,.97);border:1px solid rgba(201,168,76,.28);border-radius:10px;padding:.6rem 1.1rem;font-size:.75rem;color:var(--gold-light);box-shadow:0 8px 28px rgba(0,0,0,.6);transition:transform .3s ease;z-index:100;white-space:nowrap;font-family:'Cairo',sans-serif; }
+    .toast.show { transform:translateX(-50%) translateY(0); }
+
+    @keyframes fadeDown { from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeUp   { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+    @media(max-width:480px){ .banner{height:200px} }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="header">
+    <div class="orn"><div class="orn-line"></div><div class="orn-diamond"></div><div class="orn-line"></div></div>
+    <h1 class="title-ar">حليم بلاير</h1>
+    <p class="title-en">Halim Player · On Base Chain</p>
+  </header>
+
+  <div class="wallet-bar">
+    <div class="w-dot" id="wDot"></div>
+    <span class="w-addr" id="wAddr">غير متصل</span>
+    <button id="connectBtn">اتصل بمحفظتك</button>
+  </div>
+
+  <div class="card">
+
+    <div class="banner">
+      <img id="artistImg"
+        src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Abdel_Halim_Hafez_%281929-1977%29.jpg/800px-Abdel_Halim_Hafez_%281929-1977%29.jpg"
+        alt="عبد الحليم حافظ"
+        onerror="this.onerror=null;this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/AbdelHalimHafez.jpg/800px-AbdelHalimHafez.jpg';"
+      />
+      <div class="banner-grad"></div>
+      <div class="banner-text">
+        <div class="artist-name">عبد الحليم حافظ</div>
+        <div class="artist-dates">1929 – 1977 · العندليب الأسمر</div>
+      </div>
+    </div>
+
+    <div class="vinyl-area"><div class="vinyl" id="vinyl"></div></div>
+
+    <div class="now-playing">
+      <div class="np-label">Now Playing</div>
+      <div class="np-title" id="npTitle">اختر أغنية للبدء</div>
+    </div>
+
+    <div class="prog-wrap">
+      <div class="prog-bg" id="progBg"><div class="prog-fill" id="progFill"></div></div>
+      <div class="time-row"><span id="tElapsed">0:00</span><span id="tDur">0:00</span></div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl" id="prevBtn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+      </button>
+      <button class="play-btn" id="playBtn">
+        <svg id="icPlay"  width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="icPause" width="26" height="26" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      </button>
+      <button class="ctrl" id="nextBtn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2.5-6 6-4.27v8.53L8.5 12zM16 6h2v12h-2z"/></svg>
+      </button>
+    </div>
+
+    <div class="vol-row">
+      <div class="vol-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg></div>
+      <input type="range" id="volSlider" min="0" max="100" value="80">
+      <div class="vol-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div>
+    </div>
+
+    <div class="playlist">
+      <div class="pl-label">قائمة الأغاني</div>
+      <ul class="pl-list" id="plList"></ul>
+    </div>
+
+  </div>
+
+  <div class="tx-box" id="txBox" style="display:none"></div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-n" id="statTotal">—</div><div class="stat-l">Total Plays</div></div>
+    <div class="stat"><div class="stat-n" id="statMine">—</div><div class="stat-l">My Plays</div></div>
+  </div>
+
+  <footer class="footer">
+    <p>Built on <a href="https://base.org" target="_blank">Base</a> &nbsp;·&nbsp; Contract: <a id="cLink" href="#" target="_blank">0xdBF4...5CF4</a></p>
+    <p style="margin-top:.25rem">عبد الحليم حافظ · العندليب الأسمر</p>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<audio id="audio" preload="none" crossorigin="anonymous"></audio>
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG — paste your deployed contract address below
+// ══════════════════════════════════════════
+const CONTRACT_ADDRESS = ''; // e.g. '0xABC123...'
+const BASE_CHAIN_ID    = 8453;
+const PLAY_FEE         = '0.000001'; // ETH
+
+const ABI = [
+  "function playSong(string calldata songName) external payable",
+  "function getTotalPlays() external view returns (uint256)",
+  "function getListenerPlays(address listener) external view returns (uint256)"
+];
+
+// ══════════════════════════════════════════
+//  SONGS — Real MP3s from Internet Archive
+//  Public domain recordings of Abd El-Halim Hafez
+//  Source: archive.org/details/AbdelhalimHafezDiscografie
+// ══════════════════════════════════════════
+const SONGS = [
+  {
+    ar: 'أهواك',
+    en: 'Ahwak',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/Ahwak.mp3'
+  },
+  {
+    ar: 'بلاش عتاب',
+    en: 'Balash Etab',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/Balash%203etab.mp3'
+  },
+  {
+    ar: 'بحلم بيك',
+    en: 'Ba7lam Beek',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/Ba7lam%20Beek.mp3'
+  },
+  {
+    ar: 'أحبك',
+    en: 'Ahebek',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/Ahebek.mp3'
+  },
+  {
+    ar: 'على قد الشوق',
+    en: 'Ala Aad El Shooa',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/Ala%20Aad%20Elshoaa.mp3'
+  },
+  {
+    ar: 'على حسب وداد',
+    en: 'Ala Hesb Wedad',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/Ala%20Hesb%20Wedad.mp3'
+  },
+  {
+    ar: 'أول مرة',
+    en: 'Awwel Marra',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/Awwel%20Marra.mp3'
+  },
+  {
+    ar: 'أنا لك على طول',
+    en: 'Ana Lak Ala Tool',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/Ana%20Lak%203la%20Tool.mp3'
+  },
+  {
+    ar: 'أسمر يا أسمراني',
+    en: 'Asmar Ya Asmarani',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/Asmar%20Ya%20Asmarani.mp3'
+  },
+  {
+    ar: 'التوبة',
+    en: 'El Toba',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/El%20Toba.mp3'
+  },
+  {
+    ar: 'أي دمعة حزن',
+    en: 'Ay Dam3et 7ozn',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/Ay%20Dam3et%207ozn%20La.mp3'
+  },
+  {
+    ar: 'ذكريات',
+    en: 'Zekrayat',
+    src: 'https://archive.org/download/AbdelhalimHafezDiscografie/Abdelhalim%20Hafez%20-%20Zekrayat.ogg'
+  }
+];
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let provider, signer, contract, walletAddress;
+let isConnected = false;
+let curIdx = -1;
+let isPlaying = false;
+
+const audio = document.getElementById('audio');
+
+const wDot      = document.getElementById('wDot');
+const wAddr     = document.getElementById('wAddr');
+const connectBtn= document.getElementById('connectBtn');
+const npTitle   = document.getElementById('npTitle');
+const vinyl     = document.getElementById('vinyl');
+const artistImg = document.getElementById('artistImg');
+const playBtn   = document.getElementById('playBtn');
+const icPlay    = document.getElementById('icPlay');
+const icPause   = document.getElementById('icPause');
+const prevBtn   = document.getElementById('prevBtn');
+const nextBtn   = document.getElementById('nextBtn');
+const progBg    = document.getElementById('progBg');
+const progFill  = document.getElementById('progFill');
+const tElapsed  = document.getElementById('tElapsed');
+const tDur      = document.getElementById('tDur');
+const volSlider = document.getElementById('volSlider');
+const plList    = document.getElementById('plList');
+const txBox     = document.getElementById('txBox');
+const statTotal = document.getElementById('statTotal');
+const statMine  = document.getElementById('statMine');
+const cLink     = document.getElementById('cLink');
+const toastEl   = document.getElementById('toast');
+
+if (CONTRACT_ADDRESS) cLink.href = `https://basescan.org/address/${CONTRACT_ADDRESS}`;
+
+// ══════════════════════════════════════════
+//  BUILD PLAYLIST
+// ══════════════════════════════════════════
+SONGS.forEach((s, i) => {
+  const li = document.createElement('li');
+  li.className = 'pl-item';
+  li.dataset.i = i;
+  li.innerHTML = `
+    <span class="pl-num">${i + 1}</span>
+    <div class="pl-info">
+      <div class="pl-ar">${s.ar}</div>
+      <div class="pl-en">${s.en}</div>
+    </div>
+    <div class="eq-bars">
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+    </div>`;
+  li.addEventListener('click', () => pickSong(i));
+  plList.appendChild(li);
+});
+
+// ══════════════════════════════════════════
+//  WALLET
+// ══════════════════════════════════════════
+connectBtn.addEventListener('click', connectWallet);
+
+async function connectWallet() {
+  if (!window.ethereum) { showToast('⚠️ يرجى تثبيت MetaMask'); return; }
+  try {
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send('eth_requestAccounts', []);
+
+    const net = await provider.getNetwork();
+    if (net.chainId !== BASE_CHAIN_ID) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0x' + BASE_CHAIN_ID.toString(16) }]
+        });
+      } catch (e) {
+        if (e.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: '0x' + BASE_CHAIN_ID.toString(16),
+              chainName: 'Base',
+              rpcUrls: ['https://mainnet.base.org'],
+              nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+              blockExplorerUrls: ['https://basescan.org']
+            }]
+          });
+        }
+      }
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+    }
+
+    signer = provider.getSigner();
+    walletAddress = await signer.getAddress();
+
+    if (CONTRACT_ADDRESS) {
+      contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    }
+
+    isConnected = true;
+    wDot.className = 'w-dot ok';
+    wAddr.textContent = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+    connectBtn.textContent = 'متصل ✓';
+    connectBtn.disabled = true;
+
+    showToast('✅ متصل بـ Base');
+    fetchStats();
+  } catch (e) {
+    showToast('❌ ' + (e.message || 'فشل الاتصال'));
+  }
+}
+
+// ══════════════════════════════════════════
+//  PLAYBACK
+// ══════════════════════════════════════════
+async function pickSong(idx) {
+  curIdx = idx;
+  const s = SONGS[idx];
+  npTitle.textContent = s.ar;
+  setActive(idx, false);
+
+  // Set source and load
+  audio.src = s.src;
+  audio.volume = volSlider.value / 100;
+  audio.load();
+
+  // Fire on-chain transaction (non-blocking)
+  doPlayTx(s.ar);
+
+  // Start playback
+  doPlay();
+}
+
+function doPlay() {
+  const promise = audio.play();
+  if (promise !== undefined) {
+    promise.then(() => {
+      isPlaying = true;
+      vinyl.classList.add('spin');
+      artistImg.classList.add('playing');
+      icPlay.style.display  = 'none';
+      icPause.style.display = '';
+      setActive(curIdx, true);
+    }).catch(err => {
+      // Autoplay blocked — user just needs to tap play again
+      showToast('اضغط على زر التشغيل ▶');
+      console.warn('Autoplay blocked:', err);
+    });
+  }
+}
+
+function doPause() {
+  audio.pause();
+  isPlaying = false;
+  vinyl.classList.remove('spin');
+  artistImg.classList.remove('playing');
+  icPlay.style.display  = '';
+  icPause.style.display = 'none';
+  setActive(curIdx, false);
+}
+
+playBtn.addEventListener('click', () => {
+  if (curIdx === -1) { pickSong(0); return; }
+  isPlaying ? doPause() : doPlay();
+});
+
+prevBtn.addEventListener('click', () => {
+  pickSong(curIdx <= 0 ? SONGS.length - 1 : curIdx - 1);
+});
+
+nextBtn.addEventListener('click', () => {
+  pickSong(curIdx >= SONGS.length - 1 ? 0 : curIdx + 1);
+});
+
+audio.addEventListener('ended', () => {
+  pickSong(curIdx >= SONGS.length - 1 ? 0 : curIdx + 1);
+});
+
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration || isNaN(audio.duration)) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  progFill.style.width = pct + '%';
+  tElapsed.textContent = fmt(audio.currentTime);
+  tDur.textContent = fmt(audio.duration);
+});
+
+audio.addEventListener('error', (e) => {
+  console.error('Audio error:', e);
+  showToast('⚠️ تعذّر تحميل هذه الأغنية، جارٍ التخطي...');
+  setTimeout(() => {
+    if (curIdx < SONGS.length - 1) pickSong(curIdx + 1);
+    else doPause();
+  }, 1500);
+});
+
+progBg.addEventListener('click', e => {
+  if (!audio.duration || isNaN(audio.duration)) return;
+  const r = progBg.getBoundingClientRect();
+  audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+});
+
+volSlider.addEventListener('input', () => {
+  audio.volume = volSlider.value / 100;
+});
+
+function setActive(idx, spinning) {
+  document.querySelectorAll('.pl-item').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+    el.classList.toggle('spinning', i === idx && spinning);
+  });
+}
+
+function fmt(s) {
+  if (isNaN(s)) return '0:00';
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+// ══════════════════════════════════════════
+//  BLOCKCHAIN TX
+// ══════════════════════════════════════════
+async function doPlayTx(songName) {
+  if (!isConnected) {
+    showToast('🔗 اتصل بمحفظتك لتسجيل التشغيل على البلوكتشين');
+    return;
+  }
+  if (!contract) {
+    showToast('ℹ️ أضف عنوان العقد لتفعيل تسجيل البلوكتشين');
+    return;
+  }
+
+  showTx('pending', null, songName);
+  try {
+    const tx = await contract.playSong(songName, {
+      value: ethers.utils.parseEther(PLAY_FEE)
+    });
+    showTx('wait', tx.hash, songName);
+    await tx.wait();
+    showTx('done', tx.hash, songName);
+    showToast('✅ تم التسجيل على Base!');
+    fetchStats();
+  } catch (e) {
+    hideTx();
+    if (e.code === 4001) showToast('❌ رُفضت المعاملة');
+    else showToast('⚠️ ' + (e.reason || e.message || 'خطأ في المعاملة'));
+  }
+}
+
+function showTx(state, hash, name) {
+  txBox.style.display = 'block';
+  const sp   = `<div class="tx-spin"></div>`;
+  const link = hash ? `<a href="https://basescan.org/tx/${hash}" target="_blank">Basescan ↗</a>` : '';
+  if      (state === 'pending') txBox.innerHTML = `<div class="tx-pill">${sp} إرسال معاملة…</div>`;
+  else if (state === 'wait')    txBox.innerHTML = `<div class="tx-pill">${sp} في انتظار التأكيد · ${link}</div>`;
+  else {
+    txBox.innerHTML = `<div class="tx-pill">✅ تم التأكيد · ${link}</div>`;
+    setTimeout(hideTx, 9000);
+  }
+}
+function hideTx() { txBox.style.display = 'none'; }
+
+async function fetchStats() {
+  if (!contract || !walletAddress) return;
+  try {
+    const [tot, mine] = await Promise.all([
+      contract.getTotalPlays(),
+      contract.getListenerPlays(walletAddress)
+    ]);
+    statTotal.textContent = tot.toString();
+    statMine.textContent  = mine.toString();
+  } catch (e) { /* contract not deployed yet */ }
+}
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════════════
+//  WALLET EVENTS
+// ══════════════════════════════════════════
+if (window.ethereum) {
+  window.ethereum.on('accountsChanged', accs => {
+    if (!accs.length) {
+      isConnected = false;
+      wDot.className = 'w-dot';
+      wAddr.textContent = 'غير متصل';
+      connectBtn.textContent = 'اتصل بمحفظتك';
+      connectBtn.disabled = false;
+    } else {
+      walletAddress = accs[0];
+      wAddr.textContent = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+    }
+  });
+  window.ethereum.on('chainChanged', () => location.reload());
+}
+</script>
+</body>
+</html>
